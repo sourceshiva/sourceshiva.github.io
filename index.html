@@ -1,0 +1,117 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>INSERT Statement Generator</title> <style> table { border-collapse: collapse; width: 100%; margin-bottom: 20px; } th, td { padding: 8px; text-align: left; border: 1px solid #ddd; } th { background-color: #f2f2f2; } input[type=text] { width: 100%; padding: 6px 10px; margin: 4px 0; box-sizing: border-box; } textarea { width: 100%; height: 100px; padding: 12px 20px; box-sizing: border-box; border: 2px solid #ccc; border-radius: 4px; background-color: #f8f8f8; resize: none; } button { margin-top: 10px; } </style> </head> <body> <h1>INSERT Statement Generator</h1> <label for="table-name">Table Name:</label>
+    <input type="text" id="table-name" name="table-name" required>
+    
+    <label for="column-input">Paste Column Names (comma-separated):</label>
+    <input type="text" id="column-input" placeholder="id, name, label, prize_pool, ..." required>
+    <button type="button" onclick="addColumnsFromInput()">Add Columns</button>
+    <label for="value-input">Paste Values (comma-separated):</label>
+    <input type="text" id="value-input" placeholder="1, 'Infinity', 'Unleash the inner gamer!', ..." required>
+    <button type="button" onclick="addValuesFromInput()">Add Values</button>
+    <table id="column-table"> <thead> <tr> <th>#</th> <th>Column Name</th> <th>Value</th> <th>Action</th> </tr> </thead> <tbody> <tr> <td>1</td> <td><input type="text" id="column-name-0" name="column-name-0" required></td> <td><input type="text" id="value-0" name="value-0" required></td> <td><button type="button" onclick="addColumn()">Add</button></td> </tr> </tbody> </table> <button type="button" onclick="generateInsertStatement()">Generate INSERT Statement</button>
+    <button type="button" onclick="clearTable()">Clear Table</button>
+    
+    
+    <textarea id="insert-statement" rows="5" cols="80" readonly></textarea> <script> var columnCount = 1; 
+
+        function addColumn() {
+            columnCount++;
+            var table = document.getElementById("column-table");
+            var row = table.insertRow(-1);
+            var indexCell = row.insertCell(0);
+            var columnNameCell = row.insertCell(1);
+            var valueCell = row.insertCell(2);
+            var actionCell = row.insertCell(3);
+
+            indexCell.innerHTML = columnCount;
+            columnNameCell.innerHTML = "<input type='text' id='column-name-" + (columnCount - 1) + "' name='column-name-" + (columnCount - 1) + "' required>";
+            valueCell.innerHTML = "<input type='text' id='value-" + (columnCount - 1) + "' name='value-" + (columnCount - 1) + "' required>";
+            actionCell.innerHTML = "<button type='button' onclick='deleteColumn(this)'>Delete</button>";
+        }
+
+        function deleteColumn(button) {
+            var row = button.parentNode.parentNode;
+            var table = document.getElementById("column-table");
+            table.deleteRow(row.rowIndex);
+
+            for (var i = row.rowIndex; i < table.rows.length; i++) {
+                table.rows[i].cells[0].innerHTML = i;
+            }
+
+            columnCount--;
+        }
+
+        function clearTable() {
+            var table = document.getElementById("column-table");
+            var rowCount = table.rows.length;
+
+            for (var i = rowCount - 1; i > 0; i--) {
+                table.deleteRow(i);
+            }
+
+            columnCount = 1;
+            table.rows[0].cells[0].innerHTML = "#";
+        }
+
+        function addColumnsFromInput() {
+            var input = document.getElementById("column-input").value;
+            var columns = input.split(',').map(function(item) {
+                return item.trim();
+            }).filter(function(item) {
+                return item !== "";
+            });
+
+            columns.forEach(function(column, index) {
+                if (index > 0) {
+                    addColumn(); // Add new row for each additional column
+                }
+                document.getElementById("column-name-" + index).value = column;
+            });
+        }
+
+        function addValuesFromInput() {
+            var input = document.getElementById("value-input").value;
+            var values = input.split(',').map(function(item) {
+                return item.trim();
+            }).filter(function(item) {
+                return item !== "";
+            });
+
+            values.forEach(function(value, index) {
+                if (index < columnCount) {
+                    document.getElementById("value-" + index).value = value;
+                } else {
+                    addColumn(); // Add new row if there are more values than columns
+                    document.getElementById("value-" + index).value = value;
+                }
+            });
+        }
+
+        function generateInsertStatement() {
+            var tableName = document.getElementById("table-name").value;
+            var insertStatement = "INSERT INTO " + tableName + " (";
+
+            for (var i = 0; i < columnCount; i++) {
+                var columnName = document.getElementById("column-name-" + i).value.trim();
+                insertStatement += columnName;
+                if (i < columnCount - 1) {
+                    insertStatement += ", ";
+                }
+            }
+
+            insertStatement += ") VALUES (";
+
+            for (var j = 0; j < columnCount; j++) {
+                var value = document.getElementById("value-" + j).value.trim();
+                insertStatement += "'" + value + "'";
+                if (j < columnCount - 1) {
+                    insertStatement += ", ";
+                }
+            }
+
+            insertStatement += ");";
+
+            document.getElementById("insert-statement").value = insertStatement;
+        }
+    </script>
+</body>
+</html>
